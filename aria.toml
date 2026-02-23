@@ -1,0 +1,40 @@
+# aria.toml — ARIA project configuration
+[project]
+name        = "aria"
+version     = "0.1.0"
+description = "Autonomous multi-agent CLI/TUI orchestration layer"
+author      = "you"
+
+[database]
+path = ".aria/aria.db"
+
+[agents]
+max_pool_size = 20
+heartbeat_interval_sec = 10
+default_max_retries = 3
+
+[verification]
+min_score = 80
+weights = { technical = 50, content = 35, aesthetic = 15 }
+max_iterations = 10
+
+[context]
+warn_pct = 0.70
+critical_pct = 0.90
+
+[worktree]
+base_dir = ".aria/worktrees"
+auto_cleanup = true
+
+[tool_mapping]
+orchestrator = ["claude-code"]
+worker       = ["claude-code", "codex", "crush"]
+verifier     = ["claude-code"]
+architect    = ["claude-code", "gemini-cli"]
+researcher   = ["gemini-cli", "claude-code"]
+pm           = ["claude-code"]
+qa           = ["codex", "claude-code"]
+security     = ["claude-code"]
+librarian    = ["claude-code"]
+doc_system   = ["claude-code"]
+release_ops  = ["droids", "claude-code"]

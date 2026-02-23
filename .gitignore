@@ -1,0 +1,14 @@
+# Build output
+aria
+*.exe
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# ARIA runtime
+.aria/
+
