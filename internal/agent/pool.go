@@ -24,12 +24,12 @@ type AgentProcess struct {
 
 // Pool manages the lifecycle of agent processes.
 type Pool struct {
-	mu       sync.Mutex
-	db       *sql.DB
-	router   *Router
-	agents   map[string]*AgentProcess
-	maxSize  int
-	stopCh   chan struct{}
+	mu      sync.Mutex
+	db      *sql.DB
+	router  *Router
+	agents  map[string]*AgentProcess
+	maxSize int
+	stopCh  chan struct{}
 }
 
 // NewPool creates a new agent pool.
@@ -145,13 +145,25 @@ func (p *Pool) ActiveCount() int {
 }
 
 // IdleAgents returns agents that are not currently working on a task.
+// An agent is idle if it has no running process (Cmd == nil) and its
+// DB status is "idle" (not crashed/offline).
 func (p *Pool) IdleAgents() []*AgentProcess {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	var idle []*AgentProcess
 	for _, ap := range p.agents {
-		if ap.Cmd == nil {
+		if ap.Cmd != nil {
+			continue
+		}
+		// Double-check DB status
+		dbAgent, err := queries.GetAgent(p.db, ap.ID)
+		if err != nil {
+			// If we can't read DB, still consider it idle based on Cmd
+			idle = append(idle, ap)
+			continue
+		}
+		if dbAgent.Status == "idle" {
 			idle = append(idle, ap)
 		}
 	}

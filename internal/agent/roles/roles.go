@@ -50,6 +50,36 @@ var DefaultToolMapping = map[Role][]string{
 	RoleReleaseOps:   {"droids", "claude-code"},
 }
 
+// SystemPrompt returns the consistent system prompt for a given role.
+func SystemPrompt(r Role) string {
+	switch r {
+	case RoleOrchestrator:
+		return OrchestratorSystemPrompt
+	case RoleWorker:
+		return WorkerSystemPrompt
+	case RoleVerifier:
+		return VerifierSystemPrompt
+	case RoleArchitect:
+		return ArchitectSystemPrompt
+	case RoleResearcher:
+		return ResearcherSystemPrompt
+	case RolePM:
+		return PMSystemPrompt
+	case RoleQA:
+		return QASystemPrompt
+	case RoleSecurity:
+		return SecuritySystemPrompt
+	case RoleLibrarian:
+		return LibrarianSystemPrompt
+	case RoleDocSystem:
+		return DocSystemSystemPrompt
+	case RoleReleaseOps:
+		return ReleaseOpsSystemPrompt
+	default:
+		return WorkerSystemPrompt
+	}
+}
+
 // RoleDescription returns a human-readable description of the role.
 func RoleDescription(r Role) string {
 	switch r {

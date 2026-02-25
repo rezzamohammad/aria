@@ -8,8 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/aria-cli/aria/internal/agent"
 	"github.com/aria-cli/aria/internal/config"
 	"github.com/aria-cli/aria/internal/db"
+	"github.com/aria-cli/aria/internal/logger"
+	"github.com/aria-cli/aria/internal/orchestrator"
 	"github.com/aria-cli/aria/internal/tui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -43,13 +46,32 @@ func runRun(cmd *cobra.Command, args []string) error {
 	}
 	defer database.Close()
 
+	// Create shared logger
+	eventLog := logger.New(1000)
+
+	// Create agent pool and router
+	router := agent.NewRouter(cfg.ToolMapping)
+	pool := agent.NewPool(database, router, cfg.Agents.MaxPoolSize)
+
+	// Create orchestrator
+	orch := orchestrator.New(database, cfg, pool, router, eventLog, runAuto)
+
 	if runHeadless {
-		return runHeadlessMode(database, cfg)
+		return runHeadlessMode(database, cfg, orch, eventLog)
 	}
 
-	// Launch TUI
-	model := tui.NewModel(database, cfg)
+	// Start orchestrator in background
+	orch.Start()
+	defer orch.Stop()
+
+	// Launch TUI with logger integration
+	model := tui.NewModel(database, cfg, eventLog)
 	p := tea.NewProgram(model, tea.WithAltScreen())
+
+	// Wire logger events to TUI
+	model.SetProgram(p)
+
+	eventLog.Info("system", "ARIA TUI started (auto=%v)", runAuto)
 
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("TUI error: %w", err)
@@ -58,9 +80,21 @@ func runRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runHeadlessMode(_ *sql.DB, _ *config.Config) error {
+func runHeadlessMode(_ *sql.DB, _ *config.Config, orch *orchestrator.Orchestrator, eventLog *logger.Logger) error {
 	fmt.Println("ARIA running in headless mode. Press Ctrl+C to stop.")
-	fmt.Println("Logs will be written to .aria/aria.log")
+
+	// Subscribe to log events and print them to stdout
+	eventLog.Subscribe(func(entry logger.Entry) {
+		fmt.Printf("[%s] [%s] %s: %s\n",
+			entry.Timestamp.Format("15:04:05"),
+			entry.Level,
+			entry.Source,
+			entry.Message)
+	})
+
+	// Start orchestrator
+	orch.Start()
+	eventLog.Info("system", "ARIA headless mode started")
 
 	// Set up signal handling
 	sigCh := make(chan os.Signal, 1)
@@ -69,6 +103,7 @@ func runHeadlessMode(_ *sql.DB, _ *config.Config) error {
 	// Wait for shutdown signal
 	sig := <-sigCh
 	log.Printf("Received signal %v, shutting down...", sig)
+	orch.Stop()
 	fmt.Println("\nARIA stopped.")
 	return nil
 }

@@ -118,12 +118,12 @@ func BlockTask(db *sql.DB, taskID string, reason string) error {
 
 // QueueStats returns summary statistics about the task queue.
 type QueueStats struct {
-	Total    int
-	Pending  int
-	Running  int
-	Done     int
-	Failed   int
-	Blocked  int
+	Total   int
+	Pending int
+	Running int
+	Done    int
+	Failed  int
+	Blocked int
 }
 
 // GetQueueStats calculates current queue statistics.

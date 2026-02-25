@@ -10,12 +10,12 @@ import (
 
 // Config represents the full aria.toml configuration.
 type Config struct {
-	Project      ProjectConfig      `toml:"project"`
-	Database     DatabaseConfig     `toml:"database"`
-	Agents       AgentsConfig       `toml:"agents"`
-	Verification VerificationConfig `toml:"verification"`
-	Context      ContextConfig      `toml:"context"`
-	Worktree     WorktreeConfig     `toml:"worktree"`
+	Project      ProjectConfig       `toml:"project"`
+	Database     DatabaseConfig      `toml:"database"`
+	Agents       AgentsConfig        `toml:"agents"`
+	Verification VerificationConfig  `toml:"verification"`
+	Context      ContextConfig       `toml:"context"`
+	Worktree     WorktreeConfig      `toml:"worktree"`
 	ToolMapping  map[string][]string `toml:"tool_mapping"`
 }
 

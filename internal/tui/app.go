@@ -8,6 +8,7 @@ import (
 
 	"github.com/aria-cli/aria/internal/config"
 	"github.com/aria-cli/aria/internal/db/queries"
+	"github.com/aria-cli/aria/internal/logger"
 	"github.com/aria-cli/aria/internal/task"
 	"github.com/aria-cli/aria/internal/tui/styles"
 	"github.com/aria-cli/aria/internal/tui/views"
@@ -25,10 +26,14 @@ const (
 	PanelLog
 )
 
+// logMsg is sent when a new log entry arrives from the logger.
+type logMsg logger.Entry
+
 // Model is the root Bubble Tea model for the ARIA TUI.
 type Model struct {
 	db     *sql.DB
 	cfg    *config.Config
+	log    *logger.Logger
 	width  int
 	height int
 
@@ -51,19 +56,37 @@ type Model struct {
 	// Refresh
 	lastRefresh time.Time
 	quitting    bool
+
+	// Program reference for sending messages from logger
+	program *tea.Program
 }
 
 // tickMsg is sent periodically to refresh data.
 type tickMsg time.Time
 
 // NewModel creates the root TUI model.
-func NewModel(db *sql.DB, cfg *config.Config) Model {
+func NewModel(db *sql.DB, cfg *config.Config, log *logger.Logger) Model {
 	return Model{
 		db:          db,
 		cfg:         cfg,
+		log:         log,
 		activePanel: PanelDashboard,
 		sessions:    make(map[string]*queries.Session),
 		logEntries:  []views.LogEntry{},
+	}
+}
+
+// SetProgram sets the tea.Program reference for async message sending.
+func (m *Model) SetProgram(p *tea.Program) {
+	m.program = p
+
+	// Subscribe to logger events
+	if m.log != nil {
+		m.log.Subscribe(func(entry logger.Entry) {
+			if p != nil {
+				p.Send(logMsg(entry))
+			}
+		})
 	}
 }
 
@@ -98,6 +121,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		m.refreshData()
 		return m, tickCmd()
+
+	case logMsg:
+		entry := logger.Entry(msg)
+		m.logEntries = append(m.logEntries, views.LogEntry{
+			Timestamp: entry.Timestamp,
+			Level:     string(entry.Level),
+			Source:    entry.Source,
+			Message:   entry.Message,
+		})
+		// Keep max 100 entries
+		if len(m.logEntries) > 100 {
+			m.logEntries = m.logEntries[len(m.logEntries)-100:]
+		}
+		return m, nil
 
 	case tea.KeyMsg:
 		switch msg.String() {
