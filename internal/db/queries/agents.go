@@ -7,18 +7,18 @@ import (
 
 // Agent represents a row in the agents table.
 type Agent struct {
-	ID            string
-	Role          string
-	CLITool       string
-	Status        string
-	CurrentTaskID sql.NullString
+	ID             string
+	Role           string
+	CLITool        string
+	Status         string
+	CurrentTaskID  sql.NullString
 	CurrentSession sql.NullString
-	WorktreePath  sql.NullString
-	PID           sql.NullInt64
-	LastHeartbeat sql.NullString
-	TotalTasks    int
-	AvgScore      float64
-	CreatedAt     string
+	WorktreePath   sql.NullString
+	PID            sql.NullInt64
+	LastHeartbeat  sql.NullString
+	TotalTasks     int
+	AvgScore       float64
+	CreatedAt      string
 }
 
 // InsertAgent creates a new agent record.

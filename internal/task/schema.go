@@ -10,14 +10,14 @@ import (
 type Status string
 
 const (
-	StatusPending    Status = "pending"
-	StatusClaimed    Status = "claimed"
-	StatusRunning    Status = "running"
-	StatusVerifying  Status = "verifying"
-	StatusDone       Status = "done"
-	StatusFailed     Status = "failed"
-	StatusBlocked    Status = "blocked"
-	StatusCancelled  Status = "cancelled"
+	StatusPending   Status = "pending"
+	StatusClaimed   Status = "claimed"
+	StatusRunning   Status = "running"
+	StatusVerifying Status = "verifying"
+	StatusDone      Status = "done"
+	StatusFailed    Status = "failed"
+	StatusBlocked   Status = "blocked"
+	StatusCancelled Status = "cancelled"
 )
 
 // ValidStatuses contains all valid task statuses.
